@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laerskool Fairland — Polycomp Scoreboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #F5A623;
+    --gold-dim: rgba(245,166,35,0.18);
+    --green: #1B5E20;
+    --green-bright: #2E7D32;
+    --red-bright: #EF5350;
+    --bg: #0d1a0d;
+    --surface: #0f2410;
+    --surface2: #1a3a1c;
+    --border: rgba(245,166,35,0.18);
+    --text: #fff8f0;
+    --text-muted: #a0c0a0;
+    --radius: 12px;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #bg-logo {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #bg-logo img {
+    width: 50vw; max-width: 400px;
+    opacity: 0.06;
+    filter: brightness(0) invert(1);
+    user-select: none;
+  }
+
+  #board {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    position: relative; z-index: 1;
+  }
+
+  /* ── Top bar (matches index / glru) ── */
+  #topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 20px 6px;
+    border-bottom: 2px solid var(--gold);
+    background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+    flex-shrink: 0;
+  }
+  #topbar-left { display: flex; align-items: center; gap: 12px; }
+  #topbar-logo { height: clamp(36px, 6vh, 52px); width: auto; }
+  #topbar-school {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 3.5vmin, 32px);
+    letter-spacing: 3px; color: var(--gold);
+  }
+  #topbar-sub {
+    font-size: clamp(10px, 1.4vmin, 13px);
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-top: 1px;
+  }
+  #conn-status {
+    font-family: var(--font-display);
+    font-size: clamp(11px, 1.5vmin, 14px);
+    letter-spacing: 1px;
+    color: #FFEE58;
+  }
+
+  /* ── Fields container ── */
+  #fields-container {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: row;
+  }
+
+  .field-panel {
+    flex: 1;
+    display: flex; flex-direction: column;
+    min-width: 0;
+    padding: 1.5vh 1.2vw 1vh;
+  }
+  .field-panel + .field-panel {
+    border-left: 3px solid var(--gold);
+  }
+
+  /* Field label bar (matches glru) */
+  .field-label-bar {
+    background: rgba(245,166,35,0.12);
+    border: 1px solid rgba(245,166,35,0.3);
+    border-radius: 8px;
+    padding: clamp(4px, 0.8vh, 8px) clamp(10px, 1.5vw, 16px);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-bottom: 1.2vh;
+  }
+  .field-label {
+    font-family: var(--font-display);
+    font-size: clamp(16px, 2.8vmin, 28px);
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+
+  /* Score banner (matches index score-banner, scaled up) */
+  .score-banner {
+    flex: 1;
+    background: linear-gradient(135deg, #0d1a0d 0%, #0f2a10 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(12px, 2vh, 24px) clamp(8px, 1.5vw, 16px);
+    display: flex; align-items: center; justify-content: space-evenly;
+    min-height: 0;
+  }
+
+  .score-pill { text-align: center; flex: 1; min-width: 0; }
+
+  .score-pill-label {
+    font-size: clamp(11px, 1.8vmin, 18px);
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    margin-bottom: clamp(4px, 0.8vh, 10px);
+    font-family: var(--font-display);
+  }
+  .score-pill-label.home { color: var(--gold); }
+
+  .score-number {
+    font-family: var(--font-display);
+    font-size: clamp(64px, 20vmin, 280px);
+    line-height: 0.9;
+    color: var(--text);
+    transition: transform 0.15s ease, color 0.3s;
+  }
+  .score-number.home { color: var(--gold); }
+  .score-number.bump { animation: scoreBump 0.35s ease; }
+  @keyframes scoreBump {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  .score-vs {
+    font-family: var(--font-display);
+    font-size: clamp(18px, 3.5vmin, 36px);
+    color: var(--gold);
+    opacity: 0.55;
+    flex-shrink: 0;
+    padding: 0 clamp(4px, 1vw, 12px);
+  }
+
+  /* Timer bar (matches index timer + glru green bar) */
+  .field-timer-bar {
+    background: var(--green);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: clamp(8px, 1.5vh, 16px) clamp(12px, 2vw, 20px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: clamp(2px, 0.5vh, 6px);
+    border-top: 2px solid var(--gold);
+    flex-shrink: 0;
+    margin-top: 1.2vh;
+  }
+
+  .timer-label {
+    font-family: var(--font-display);
+    font-size: clamp(11px, 1.8vmin, 18px);
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 2px;
+  }
+
+  .timer-display {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 9vmin, 120px);
+    letter-spacing: 4px;
+    line-height: 1;
+    color: var(--text-muted);
+    min-width: 5ch;
+    text-align: center;
+    transition: color 0.3s;
+  }
+  .timer-display.running { color: var(--gold); }
+  .timer-display.expired {
+    color: var(--red-bright);
+    animation: timerFlash 0.8s infinite;
+  }
+  @keyframes timerFlash {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+  }
+
+  /* ── No signal ── */
+  #no-signal {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    background: var(--bg); z-index: 50;
+    transition: opacity 0.5s;
+  }
+  #no-signal.hidden { opacity: 0; pointer-events: none; }
+  #no-signal img { width: clamp(64px, 12vmin, 100px); height: auto; opacity: 0.5; }
+  #no-signal p {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 4vmin, 36px);
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.35);
+  }
+  #no-signal small {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 360px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div id="bg-logo">
+  <img src="1780310267995_Skool_Logo.png" alt="">
+</div>
+
+<div id="board">
+
+  <div id="no-signal">
+    <img src="1780310267995_Skool_Logo.png" alt="Laerskool Fairland">
+    <p>WAITING FOR APP</p>
+    <small>Open the Laerskool Fairland app and tap 📺 SCOREBOARD to connect this display</small>
+  </div>
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div id="topbar-left">
+      <img id="topbar-logo" src="1780310267995_Skool_Logo.png" alt="Laerskool Fairland">
+      <div>
+        <div id="topbar-school">LAERSKOOL FAIRLAND</div>
+        <div id="topbar-sub">RUGBY SCOREBOARD</div>
+      </div>
+    </div>
+    <div id="conn-status">○ CONNECTING…</div>
+  </div>
+
+  <div id="fields-container">
+
+    <!-- FIELD 1 -->
+    <div class="field-panel" id="field-panel-1">
+      <div class="field-label-bar">
+        <div class="field-label">FIELD 1</div>
+      </div>
+      <div class="score-banner">
+        <div class="score-pill">
+          <div class="score-pill-label home">HOME</div>
+          <div class="score-number home" id="f1-home-score">0</div>
+        </div>
+        <div class="score-vs">VS</div>
+        <div class="score-pill">
+          <div class="score-pill-label">AWAY</div>
+          <div class="score-number" id="f1-away-score">0</div>
+        </div>
+      </div>
+      <div class="field-timer-bar">
+        <div class="timer-label">MATCH TIME</div>
+        <div class="timer-display" id="f1-timer-display">40:00</div>
+      </div>
+    </div>
+
+    <!-- FIELD 2 -->
+    <div class="field-panel" id="field-panel-2">
+      <div class="field-label-bar">
+        <div class="field-label">FIELD 2</div>
+      </div>
+      <div class="score-banner">
+        <div class="score-pill">
+          <div class="score-pill-label home">HOME</div>
+          <div class="score-number home" id="f2-home-score">0</div>
+        </div>
+        <div class="score-vs">VS</div>
+        <div class="score-pill">
+          <div class="score-pill-label">AWAY</div>
+          <div class="score-number" id="f2-away-score">0</div>
+        </div>
+      </div>
+      <div class="field-timer-bar">
+        <div class="timer-label">MATCH TIME</div>
+        <div class="timer-display" id="f2-timer-display">40:00</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<script>
+const ABLY_API_KEY = 'RrGsHw.cZdbWA:Sdr_t72sv6EPkpD6rWmKEm07Wx-6m5zp4roFYU-kEtQ';
+const ABLY_CHANNEL = 'glru-scoreboard';
+
+const prevScores = { 1: { home: 0, away: 0 }, 2: { home: 0, away: 0 } };
+
+const noSignal = document.getElementById('no-signal');
+let receivedAny = false;
+
+function connectAbly() {
+  const client = new Ably.Realtime({ key: ABLY_API_KEY, clientId: 'polycomp-scoreboard' });
+
+  client.connection.on('connected', () => {
+    document.getElementById('conn-status').textContent = '● LIVE';
+    document.getElementById('conn-status').style.color = '#66BB6A';
+  });
+  client.connection.on('disconnected', () => {
+    document.getElementById('conn-status').textContent = '○ RECONNECTING…';
+    document.getElementById('conn-status').style.color = '#FFEE58';
+  });
+  client.connection.on('failed', () => {
+    document.getElementById('conn-status').textContent = '✕ OFFLINE';
+    document.getElementById('conn-status').style.color = '#EF5350';
+  });
+
+  const channel = client.channels.get(ABLY_CHANNEL);
+
+  channel.subscribe('state', (msg) => {
+    if (!receivedAny) {
+      receivedAny = true;
+      noSignal.classList.add('hidden');
+    }
+    updateField(msg.data);
+  });
+
+  channel.history({ limit: 10 }, (err, result) => {
+    if (err || !result) return;
+    const items = result.items.filter(i => i.name === 'state').reverse();
+    items.forEach(i => {
+      if (!receivedAny) { receivedAny = true; noSignal.classList.add('hidden'); }
+      updateField(i.data);
+    });
+  });
+}
+
+connectAbly();
+
+function bump(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+}
+
+function pad(n) { return String(Math.floor(n)).padStart(2, '0'); }
+function fmt(s) { return pad(s / 60) + ':' + pad(s % 60); }
+
+function updateField(s) {
+  const fn = s.fieldNum || 1;
+  const p = 'f' + fn + '-';
+
+  const homeScore = s.totalFor || 0;
+  const awayScore = s.totalAgainst || 0;
+  if (homeScore !== prevScores[fn].home) { bump(p + 'home-score'); prevScores[fn].home = homeScore; }
+  if (awayScore !== prevScores[fn].away) { bump(p + 'away-score'); prevScores[fn].away = awayScore; }
+
+  document.getElementById(p + 'home-score').textContent = homeScore;
+  document.getElementById(p + 'away-score').textContent = awayScore;
+
+  const secs = typeof s.timerSeconds === 'number' ? s.timerSeconds : 0;
+  const timerEl = document.getElementById(p + 'timer-display');
+  timerEl.textContent = fmt(secs);
+  let timerClass = 'timer-display';
+  if (secs === 0 && !s.timerRunning) timerClass += ' expired';
+  else if (s.timerRunning) timerClass += ' running';
+  timerEl.className = timerClass;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+});
+</script>
+</body>
+</html>
