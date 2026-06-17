@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="af">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laerskool Fairland — Polycomp Scoreboard</title>
+<title>Laerskool Fairland — Polycomp Telbord</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,7 +52,7 @@
     position: relative; z-index: 1;
   }
 
-  /* ── Top bar (matches index / glru) ── */
+  /* ── Top bar ── */
   #topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 8px 20px 6px;
@@ -60,12 +60,11 @@
     background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
     flex-shrink: 0;
   }
-  #topbar-left { display: flex; align-items: center; gap: 12px; }
-  #topbar-logo { height: clamp(36px, 6vh, 52px); width: auto; }
   #topbar-school {
     font-family: var(--font-display);
     font-size: clamp(20px, 3.5vmin, 32px);
-    letter-spacing: 3px; color: var(--gold);
+    letter-spacing: 3px;
+    color: #ffffff;
   }
   #topbar-sub {
     font-size: clamp(10px, 1.4vmin, 13px);
@@ -86,17 +85,20 @@
     display: flex; flex-direction: row;
   }
 
+  /* Slots default hidden; JS activates them */
   .field-panel {
+    display: none;
     flex: 1;
-    display: flex; flex-direction: column;
+    flex-direction: column;
     min-width: 0;
     padding: 1.5vh 1.2vw 1vh;
   }
-  .field-panel + .field-panel {
+  .field-panel.active { display: flex; }
+  .field-panel.active + .field-panel.active {
     border-left: 3px solid var(--gold);
   }
 
-  /* Field label bar (matches glru) */
+  /* Field label bar */
   .field-label-bar {
     background: rgba(245,166,35,0.12);
     border: 1px solid rgba(245,166,35,0.3);
@@ -113,7 +115,7 @@
     color: var(--gold);
   }
 
-  /* Score banner (matches index score-banner, scaled up) */
+  /* Score banner */
   .score-banner {
     flex: 1;
     background: linear-gradient(135deg, #0d1a0d 0%, #0f2a10 100%);
@@ -133,7 +135,7 @@
     margin-bottom: clamp(4px, 0.8vh, 10px);
     font-family: var(--font-display);
   }
-  .score-pill-label.home { color: var(--gold); }
+  .score-pill-label.tuis { color: var(--gold); }
 
   .score-number {
     font-family: var(--font-display);
@@ -142,7 +144,7 @@
     color: var(--text);
     transition: transform 0.15s ease, color 0.3s;
   }
-  .score-number.home { color: var(--gold); }
+  .score-number.tuis { color: var(--gold); }
   .score-number.bump { animation: scoreBump 0.35s ease; }
   @keyframes scoreBump {
     0%   { transform: scale(1); }
@@ -159,7 +161,7 @@
     padding: 0 clamp(4px, 1vw, 12px);
   }
 
-  /* Timer bar (matches index timer + glru green bar) */
+  /* Timer bar */
   .field-timer-bar {
     background: var(--green);
     border: 1px solid var(--border);
@@ -190,14 +192,14 @@
     text-align: center;
     transition: color 0.3s;
   }
-  .timer-display.running { color: var(--gold); }
-  .timer-display.expired {
+  .timer-display.loop { color: var(--gold); }
+  .timer-display.verstreke {
     color: var(--red-bright);
     animation: timerFlash 0.8s infinite;
   }
   @keyframes timerFlash {
     0%, 100% { opacity: 1; }
-    50%      { opacity: 0.35; }
+    50%       { opacity: 0.35; }
   }
 
   /* ── No signal ── */
@@ -235,68 +237,63 @@
 
   <div id="no-signal">
     <img src="1780310267995_Skool_Logo.png" alt="Laerskool Fairland">
-    <p>WAITING FOR APP</p>
-    <small>Open the Laerskool Fairland app and tap 📺 SCOREBOARD to connect this display</small>
+    <p>WAG VIR TOEP</p>
+    <small>Maak die Laerskool Fairland-toep oop en tik 📺 TELBORD om hierdie skerm te verbind</small>
   </div>
 
   <!-- Top bar -->
   <div id="topbar">
-    <div id="topbar-left">
-      <img id="topbar-logo" src="1780310267995_Skool_Logo.png" alt="Laerskool Fairland">
-      <div>
-        <div id="topbar-school">LAERSKOOL FAIRLAND</div>
-        <div id="topbar-sub">RUGBY SCOREBOARD</div>
-      </div>
+    <div>
+      <div id="topbar-school">LAERSKOOL FAIRLAND</div>
+      <div id="topbar-sub">POLYCOMP TELBORD</div>
     </div>
-    <div id="conn-status">○ CONNECTING…</div>
+    <div id="conn-status">○ VERBIND...</div>
   </div>
 
   <div id="fields-container">
-
-    <!-- FIELD 1 -->
-    <div class="field-panel" id="field-panel-1">
+    <!-- Slot 0: Field 2 (left) -->
+    <div class="field-panel" id="slot-0">
       <div class="field-label-bar">
-        <div class="field-label">FIELD 1</div>
+        <div class="field-label" id="slot-0-label">VELD 2</div>
       </div>
       <div class="score-banner">
         <div class="score-pill">
-          <div class="score-pill-label home">HOME</div>
-          <div class="score-number home" id="f1-home-score">0</div>
+          <div class="score-pill-label tuis">TUIS</div>
+          <div class="score-number tuis" id="slot-0-home">0</div>
         </div>
-        <div class="score-vs">VS</div>
+        <div class="score-vs">TS</div>
         <div class="score-pill">
-          <div class="score-pill-label">AWAY</div>
-          <div class="score-number" id="f1-away-score">0</div>
+          <div class="score-pill-label">WEG</div>
+          <div class="score-number" id="slot-0-away">0</div>
         </div>
       </div>
       <div class="field-timer-bar">
-        <div class="timer-label">MATCH TIME</div>
-        <div class="timer-display" id="f1-timer-display">40:00</div>
+        <div class="timer-label">WEDSTRYDTYD</div>
+        <div class="timer-display" id="slot-0-timer">40:00</div>
       </div>
     </div>
 
-    <!-- FIELD 2 -->
-    <div class="field-panel" id="field-panel-2">
+    <!-- Slot 1: Field 1 (right) -->
+    <div class="field-panel" id="slot-1">
       <div class="field-label-bar">
-        <div class="field-label">FIELD 2</div>
+        <div class="field-label" id="slot-1-label">VELD 1</div>
       </div>
       <div class="score-banner">
         <div class="score-pill">
-          <div class="score-pill-label home">HOME</div>
-          <div class="score-number home" id="f2-home-score">0</div>
+          <div class="score-pill-label tuis">TUIS</div>
+          <div class="score-number tuis" id="slot-1-home">0</div>
         </div>
-        <div class="score-vs">VS</div>
+        <div class="score-vs">TS</div>
         <div class="score-pill">
-          <div class="score-pill-label">AWAY</div>
-          <div class="score-number" id="f2-away-score">0</div>
+          <div class="score-pill-label">WEG</div>
+          <div class="score-number" id="slot-1-away">0</div>
         </div>
       </div>
       <div class="field-timer-bar">
-        <div class="timer-label">MATCH TIME</div>
-        <div class="timer-display" id="f2-timer-display">40:00</div>
+        <div class="timer-label">WEDSTRYDTYD</div>
+        <div class="timer-display" id="slot-1-timer">40:00</div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -305,49 +302,19 @@
 const ABLY_API_KEY = 'RrGsHw.cZdbWA:Sdr_t72sv6EPkpD6rWmKEm07Wx-6m5zp4roFYU-kEtQ';
 const ABLY_CHANNEL = 'glru-scoreboard';
 
-const prevScores = { 1: { home: 0, away: 0 }, 2: { home: 0, away: 0 } };
+// Fixed slot assignment: Field 2 → slot 0 (left), Field 1 → slot 1 (right)
+const FIELD_SLOT = { '1': 1, '2': 0 };
+const ALL_FIELDS = ['1', '2'];
+const STALE_MS   = 2 * 60 * 1000;
+
+const prevScores = { '1': { home: 0, away: 0 }, '2': { home: 0, away: 0 } };
+const activeFields = new Set();
+const lastSeen     = {};
 
 const noSignal = document.getElementById('no-signal');
 let receivedAny = false;
 
-function connectAbly() {
-  const client = new Ably.Realtime({ key: ABLY_API_KEY, clientId: 'polycomp-scoreboard' });
-
-  client.connection.on('connected', () => {
-    document.getElementById('conn-status').textContent = '● LIVE';
-    document.getElementById('conn-status').style.color = '#66BB6A';
-  });
-  client.connection.on('disconnected', () => {
-    document.getElementById('conn-status').textContent = '○ RECONNECTING…';
-    document.getElementById('conn-status').style.color = '#FFEE58';
-  });
-  client.connection.on('failed', () => {
-    document.getElementById('conn-status').textContent = '✕ OFFLINE';
-    document.getElementById('conn-status').style.color = '#EF5350';
-  });
-
-  const channel = client.channels.get(ABLY_CHANNEL);
-
-  channel.subscribe('state', (msg) => {
-    if (!receivedAny) {
-      receivedAny = true;
-      noSignal.classList.add('hidden');
-    }
-    updateField(msg.data);
-  });
-
-  channel.history({ limit: 10 }, (err, result) => {
-    if (err || !result) return;
-    const items = result.items.filter(i => i.name === 'state').reverse();
-    items.forEach(i => {
-      if (!receivedAny) { receivedAny = true; noSignal.classList.add('hidden'); }
-      updateField(i.data);
-    });
-  });
-}
-
-connectAbly();
-
+// ── Bump animation ────────────────────────────────────────────
 function bump(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -356,29 +323,122 @@ function bump(id) {
   el.classList.add('bump');
 }
 
+// ── Timer format ──────────────────────────────────────────────
 function pad(n) { return String(Math.floor(n)).padStart(2, '0'); }
 function fmt(s) { return pad(s / 60) + ':' + pad(s % 60); }
 
+// ── Activate / deactivate a slot ──────────────────────────────
+function setSlotActive(fieldId, active) {
+  const slotIdx = FIELD_SLOT[fieldId];
+  if (slotIdx == null) return;
+  const el = document.getElementById('slot-' + slotIdx);
+  if (!el) return;
+  if (active) {
+    el.classList.add('active');
+    activeFields.add(fieldId);
+  } else {
+    el.classList.remove('active');
+    activeFields.delete(fieldId);
+  }
+  updateConnStatus();
+}
+
+function updateConnStatus() {
+  const sub = document.getElementById('topbar-sub');
+  if (!sub) return;
+  const count = activeFields.size;
+  if (count === 0) { sub.textContent = 'POLYCOMP TELBORD'; return; }
+  const sorted = [...activeFields].sort();
+  sub.textContent = sorted.map(f => 'VELD ' + f).join(' · ');
+}
+
+// ── Render a field update ─────────────────────────────────────
 function updateField(s) {
-  const fn = s.fieldNum || 1;
-  const p = 'f' + fn + '-';
+  const fid = String(s.fieldNum || s.fieldId || '');
+  if (!ALL_FIELDS.includes(fid)) return;
 
-  const homeScore = s.totalFor || 0;
+  const slotIdx = FIELD_SLOT[fid];
+  const pfx = 'slot-' + slotIdx + '-';
+
+  // Activate the slot if new
+  if (!activeFields.has(fid)) {
+    setSlotActive(fid, true);
+  }
+  lastSeen[fid] = Date.now();
+
+  if (!receivedAny) {
+    receivedAny = true;
+    noSignal.classList.add('hidden');
+  }
+
+  const homeScore = s.totalFor    || 0;
   const awayScore = s.totalAgainst || 0;
-  if (homeScore !== prevScores[fn].home) { bump(p + 'home-score'); prevScores[fn].home = homeScore; }
-  if (awayScore !== prevScores[fn].away) { bump(p + 'away-score'); prevScores[fn].away = awayScore; }
 
-  document.getElementById(p + 'home-score').textContent = homeScore;
-  document.getElementById(p + 'away-score').textContent = awayScore;
+  if (homeScore !== prevScores[fid].home) { bump(pfx + 'home'); prevScores[fid].home = homeScore; }
+  if (awayScore !== prevScores[fid].away) { bump(pfx + 'away'); prevScores[fid].away = awayScore; }
+
+  document.getElementById(pfx + 'home').textContent = homeScore;
+  document.getElementById(pfx + 'away').textContent = awayScore;
 
   const secs = typeof s.timerSeconds === 'number' ? s.timerSeconds : 0;
-  const timerEl = document.getElementById(p + 'timer-display');
-  timerEl.textContent = fmt(secs);
-  let timerClass = 'timer-display';
-  if (secs === 0 && !s.timerRunning) timerClass += ' expired';
-  else if (s.timerRunning) timerClass += ' running';
-  timerEl.className = timerClass;
+  const timerEl = document.getElementById(pfx + 'timer');
+  if (timerEl) {
+    timerEl.textContent = fmt(secs);
+    let cls = 'timer-display';
+    if (secs === 0 && !s.timerRunning) cls += ' verstreke';
+    else if (s.timerRunning) cls += ' loop';
+    timerEl.className = cls;
+  }
 }
+
+// ── Stale field cleanup ───────────────────────────────────────
+setInterval(() => {
+  ALL_FIELDS.forEach(fid => {
+    if (activeFields.has(fid) && lastSeen[fid] && Date.now() - lastSeen[fid] > STALE_MS) {
+      setSlotActive(fid, false);
+    }
+  });
+  if (activeFields.size === 0 && receivedAny) {
+    noSignal.classList.remove('hidden');
+    receivedAny = false;
+  }
+}, 10000);
+
+// ── Ably connection ───────────────────────────────────────────
+function connectAbly() {
+  const client = new Ably.Realtime({ key: ABLY_API_KEY, clientId: 'polycomp-scoreboard' });
+
+  client.connection.on('connected', () => {
+    document.getElementById('conn-status').textContent  = '● LEWENDIG';
+    document.getElementById('conn-status').style.color  = '#66BB6A';
+  });
+  client.connection.on('disconnected', () => {
+    document.getElementById('conn-status').textContent  = '○ HERVERBIND...';
+    document.getElementById('conn-status').style.color  = '#FFEE58';
+  });
+  client.connection.on('failed', () => {
+    document.getElementById('conn-status').textContent  = '✕ VANLYN';
+    document.getElementById('conn-status').style.color  = '#EF5350';
+  });
+
+  const channel = client.channels.get(ABLY_CHANNEL);
+
+  // Live messages
+  channel.subscribe('state', (msg) => {
+    if (msg.data) updateField(msg.data);
+  });
+
+  // History: replay recent state so scores appear immediately on load
+  channel.history({ limit: 20 }, (err, result) => {
+    if (err || !result) return;
+    result.items
+      .filter(i => i.name === 'state')
+      .reverse()
+      .forEach(i => { if (i.data) updateField(i.data); });
+  });
+}
+
+connectAbly();
 
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.documentElement;
